@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Light Up Thadingyut</title>
+<style>
+:root{--bg:#080c25;--panel:#111738;--gold:#ffbf3f;--text:#fff7dc;--muted:#aab0cc}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% 15%,#22265d,var(--bg) 55%);color:var(--text);font-family:system-ui,-apple-system,sans-serif;min-height:100svh;overflow:hidden;touch-action:manipulation}
+.wrap{height:100svh;max-width:720px;margin:auto;display:flex;flex-direction:column;padding:max(14px,env(safe-area-inset-top)) 16px max(14px,env(safe-area-inset-bottom))}
+header{display:flex;justify-content:space-between;align-items:center}.brand{font-weight:900;color:var(--gold)}.pill{font-size:12px;background:#ffffff12;padding:7px 10px;border-radius:99px}
+main{flex:1;display:grid;place-items:center}.card{width:100%;background:#101532d9;border:1px solid #ffffff16;border-radius:26px;padding:24px;text-align:center;box-shadow:0 24px 70px #0008}
+h1{font-size:clamp(34px,9vw,58px);margin:6px 0;color:var(--gold);line-height:.95}p{color:var(--muted)}input,button{font:inherit;border:0;border-radius:15px;padding:15px;width:100%}input{background:#fff;color:#111;margin:12px 0}button{background:linear-gradient(135deg,#ffd25a,#f29b24);font-weight:900;cursor:pointer}.secondary{background:#ffffff10;color:white;margin-top:10px}
+.game{display:none}.hud{display:flex;justify-content:space-between;margin-bottom:14px}.arena{height:55svh;min-height:330px;position:relative;overflow:hidden;border-radius:22px;background:linear-gradient(#11184b,#16102f);border:1px solid #ffffff12}.lantern{position:absolute;width:70px;height:88px;border-radius:48% 48% 38% 38%;background:radial-gradient(circle at 50% 42%,#fff8b5 0 13%,var(--gold) 25%,#df681e 70%);box-shadow:0 0 28px #ffb52c99;display:grid;place-items:center;color:#562800;font-weight:1000;user-select:none;touch-action:none}.lantern:after{content:"";position:absolute;bottom:-15px;width:2px;height:15px;background:#ffc84c}.msg{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;font-size:34px;font-weight:1000;text-shadow:0 3px 15px #000}
+footer{text-align:center;font-size:11px;color:#6f769b;padding-top:8px}
+</style></head>
+<body><div class="wrap">
+<header><div class="brand" id="brand">LIGHT UP THADINGYUT</div><div class="pill" id="mode">Detecting input…</div></header>
+<main>
+<section class="card" id="start"><div style="font-size:54px">🏮</div><h1 id="title">Light Up<br>Thadingyut</h1><p id="subtitle">Six quick festival challenges. Light the night and climb the leaderboard.</p><input id="username" maxlength="18" placeholder="Choose a username"><button id="play">START FESTIVAL</button><button class="secondary" onclick="location.href='admin/'">OPEN CAMPAIGN EDITOR</button></section>
+<section class="game" id="game" style="width:100%"><div class="hud"><b id="stage">Stage 1 / 6</b><b>Score <span id="score">0</span></b><b><span id="time">8.0</span>s</b></div><div class="arena" id="arena"><div class="msg" id="msg"></div></div></section>
+<section class="card" id="result" style="display:none"><div style="font-size:52px">✨</div><h1>Festival Lit!</h1><p><b id="finalName"></b>, your score is</p><h1 id="finalScore">0</h1><p id="tier"></p><button onclick="location.reload()">PLAY AGAIN</button><button class="secondary" id="boardBtn">VIEW LEADERBOARD</button></section>
+<section class="card" id="board" style="display:none"><h2>🏆 Leaderboard</h2><div id="rows"></div><button class="secondary" onclick="location.reload()">BACK</button></section>
+</main><footer>Prototype • local leaderboard • production backend pending</footer></div>
+<script>
+const DEFAULT={title:"Light Up Thadingyut",subtitle:"Six quick festival challenges. Light the night and climb the leaderboard.",primary:"#ffbf3f",background:"#080c25",stageSeconds:8,targets:6,rewards:[{name:"Golden Pagoda Tier",min:8000},{name:"Golden Lantern Tier",min:5500},{name:"Festival Light Tier",min:3000},{name:"Lantern Tier",min:0}]};
+let cfg={...DEFAULT,...JSON.parse(localStorage.getItem("tdg_published")||"{}")}; document.documentElement.style.setProperty("--gold",cfg.primary);document.documentElement.style.setProperty("--bg",cfg.background);title.innerHTML=cfg.title.replace(" ","<br>");subtitle.textContent=cfg.subtitle;
+mode.textContent=matchMedia("(pointer:coarse)").matches?"📱 Touch mode":"🖱️ Click mode";
+let user="",stageNo=1,scoreN=0,hits=0,left=0,timer=null,started=0;
+function spawn(){arena.querySelectorAll(".lantern").forEach(x=>x.remove());let l=document.createElement("div");l.className="lantern";l.textContent="TAP";l.style.left=(8+Math.random()*72)+"%";l.style.top=(8+Math.random()*68)+"%";l.onpointerdown=e=>{e.preventDefault();hits++;scoreN+=Math.round(700+Math.max(0,left)*70+stageNo*60);score.textContent=scoreN;navigator.vibrate?.(20); if(hits>=cfg.targets) next(); else spawn()};arena.append(l)}
+function beginStage(){hits=0;left=cfg.stageSeconds;started=performance.now();stage.textContent="Stage "+stageNo+" / 6";msg.textContent=["Light the Lanterns","Catch the Light","Perfect Flame","Remember the Lights","Festival Rush","Light the Pagoda"][stageNo-1];setTimeout(()=>msg.textContent="",650);spawn();clearInterval(timer);timer=setInterval(()=>{left=Math.max(0,cfg.stageSeconds-(performance.now()-started)/1000);time.textContent=left.toFixed(1);if(left<=0)next()},80)}
+function next(){clearInterval(timer);if(stageNo++>=6)return finish();beginStage()}
+function finish(){game.style.display="none";result.style.display="block";finalName.textContent=user;finalScore.textContent=scoreN;let r=cfg.rewards.sort((a,b)=>b.min-a.min).find(x=>scoreN>=x.min);tier.textContent=r.name;let lb=JSON.parse(localStorage.getItem("tdg_scores")||"[]");lb.push({name:user,score:scoreN});lb.sort((a,b)=>b.score-a.score);localStorage.setItem("tdg_scores",JSON.stringify(lb.slice(0,50)))}
+play.onclick=()=>{user=username.value.trim()||"FestivalPlayer";start.style.display="none";game.style.display="block";beginStage()};
+boardBtn.onclick=()=>{result.style.display="none";board.style.display="block";let lb=JSON.parse(localStorage.getItem("tdg_scores")||"[]");rows.innerHTML=lb.slice(0,10).map((x,i)=>'<p><b>#'+(i+1)+' '+x.name+'</b> — '+x.score+'</p>').join("")||"<p>No scores yet.</p>"}
+</script></body></html>
